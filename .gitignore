@@ -1,0 +1,20 @@
+# حجب مجلدات المكتبات الضخمة
+node_modules/
+venv/
+.venv/
+
+# حجب ملفات الأسرار والبيانات الحساسة
+.env
+.env.local
+*.pod
+
+# حجب مجلدات البناء والمخرجات
+build/
+dist/
+
+# حجب إعدادات المحرر والنظام
+.vscode/
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc

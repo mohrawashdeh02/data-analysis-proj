@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Payroll Engine — HR System</title>
+<style>
+:root{
+  --bg:#0a0e1a;--surface:#111827;--surface2:#1a2235;--surface3:#1e2a40;
+  --border:#1f2d45;--border-h:#2d4163;
+  --text:#e2e8f0;--muted:#7a8999;--dim:#3d5068;
+  --primary:#6366f1;--primary-glow:rgba(99,102,241,.18);
+  --violet:#8b5cf6;--green:#10b981;--amber:#f59e0b;--rose:#f43f5e;
+  --r:14px;--rs:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;font-size:14px;}
+
+/* NAV */
+.nav{display:flex;align-items:center;justify-content:space-between;padding:12px 28px;border-bottom:1px solid var(--border);background:rgba(17,24,39,.95);backdrop-filter:blur(12px);position:sticky;top:0;z-index:200;}
+.nav-logo{display:flex;align-items:center;gap:10px;}
+.nav-logo-icon{width:32px;height:32px;background:linear-gradient(135deg,#10b981,#34d399);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.nav-logo-text{font-size:14px;font-weight:700;color:var(--text);}
+.nav-logo-sub{font-size:9px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;}
+.nav-links{display:flex;gap:6px;}
+.nav-link{padding:6px 14px;border-radius:var(--rs);font-size:11px;font-weight:600;text-decoration:none;color:var(--muted);border:1px solid transparent;transition:all .2s;}
+.nav-link:hover{color:var(--text);border-color:var(--border-h);background:var(--surface2);}
+.nav-link.active{background:rgba(16,185,129,.1);color:#34d399;border-color:rgba(16,185,129,.3);}
+
+/* LAYOUT */
+.wrap{max-width:1280px;margin:0 auto;padding:24px 20px;display:flex;flex-direction:column;gap:18px;}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;position:relative;overflow:hidden;transition:border-color .3s;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(99,102,241,.4),transparent);}
+.lbl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+.fade{opacity:0;transform:translateY(8px);transition:opacity .4s,transform .4s;}
+.fade.in{opacity:1;transform:none;}
+
+/* LANDING */
+.landing-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:560px){.landing-grid{grid-template-columns:1fr;}}
+.landing-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:22px 20px;display:flex;flex-direction:column;align-items:center;gap:10px;text-decoration:none;color:var(--text);position:relative;overflow:hidden;transition:all .3s;cursor:pointer;}
+.landing-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.landing-card.analyzer::before{background:linear-gradient(90deg,#6366f1,#8b5cf6);}
+.landing-card.payroll-c::before{background:linear-gradient(90deg,#10b981,#34d399);}
+.landing-card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.3);}
+.landing-card.analyzer:hover{border-color:rgba(99,102,241,.35);}
+.landing-card.payroll-c:hover,.landing-card.payroll-c.here{border-color:rgba(16,185,129,.4);background:rgba(16,185,129,.03);}
+.landing-icon{font-size:32px;}
+.landing-title{font-size:14px;font-weight:800;}
+.landing-desc{font-size:11px;color:var(--muted);text-align:center;line-height:1.6;}
+.landing-feats{display:flex;flex-direction:column;gap:4px;width:100%;margin-top:2px;}
+.landing-feat{font-size:10px;color:var(--muted);display:flex;align-items:center;gap:6px;}
+.feat-dot{width:4px;height:4px;border-radius:50%;flex-shrink:0;}
+.analyzer .feat-dot{background:#6366f1;} .payroll-c .feat-dot{background:#10b981;}
+.landing-cta{margin-top:6px;padding:7px 18px;border-radius:18px;font-size:11px;font-weight:700;border:none;cursor:pointer;font-family:inherit;transition:all .2s;}
+.analyzer .landing-cta{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;}
+.payroll-c .landing-cta{background:linear-gradient(135deg,#10b981,#34d399);color:#fff;}
+
+/* UPLOAD */
+.upload-zone{border:2px dashed var(--border-h);border-radius:var(--r);padding:28px;text-align:center;cursor:pointer;transition:all .25s;}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--green);background:rgba(16,185,129,.04);}
+.upload-zone input{display:none;}
+
+/* RULES */
+.rules-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;}
+.rule-item{display:flex;flex-direction:column;gap:5px;}
+.rule-label{font-size:10px;color:var(--muted);font-weight:600;}
+.rule-input{background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);padding:7px 11px;font-size:13px;font-family:inherit;outline:none;width:100%;transition:border-color .2s;}
+.rule-input:focus{border-color:var(--green);box-shadow:0 0 0 2px rgba(16,185,129,.15);}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 20px;border-radius:var(--rs);border:none;cursor:pointer;font-size:12px;font-weight:700;font-family:inherit;transition:all .22s;}
+.btn-green{background:linear-gradient(135deg,#10b981,#34d399);color:#fff;box-shadow:0 3px 12px rgba(16,185,129,.25);}
+.btn-green:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(16,185,129,.35);}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-ghost:hover{color:var(--text);border-color:var(--border-h);}
+.btn-red{background:rgba(244,63,94,.1);color:var(--rose);border:1px solid rgba(244,63,94,.3);}
+.btn-export{background:rgba(99,102,241,.1);color:#818cf8;border:1px solid rgba(99,102,241,.3);}
+.btn-export:hover{background:rgba(99,102,241,.2);}
+
+/* SUMMARY CARDS */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;}
+.kpi-c{background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:14px;position:relative;overflow:hidden;transition:transform .2s,border-color .2s;}
+.kpi-c::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.kpi-c.g::before{background:linear-gradient(90deg,#10b981,#34d399);}
+.kpi-c.b::before{background:linear-gradient(90deg,#6366f1,#8b5cf6);}
+.kpi-c.a::before{background:linear-gradient(90deg,#f59e0b,#fbbf24);}
+.kpi-c.r::before{background:linear-gradient(90deg,#f43f5e,#fb7185);}
+.kpi-c:hover{transform:translateY(-2px);border-color:var(--border-h);}
+.kpi-c-label{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+.kpi-c-val{font-size:20px;font-weight:800;color:var(--text);line-height:1;}
+.kpi-c-sub{font-size:10px;color:var(--dim);margin-top:4px;}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;border-radius:var(--rs);border:1px solid var(--border);max-height:520px;overflow-y:auto;}
+.table-wrap::-webkit-scrollbar{width:5px;height:5px;}
+.table-wrap::-webkit-scrollbar-thumb{background:var(--border-h);border-radius:4px;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead{position:sticky;top:0;z-index:10;}
+th{background:var(--surface3);padding:10px 12px;text-align:right;color:var(--muted);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;border-bottom:1px solid var(--border);}
+td{padding:8px 10px;border-bottom:1px solid rgba(31,45,69,.6);color:var(--text);white-space:nowrap;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(16,185,129,.03);}
+
+/* EDITABLE CELLS */
+.editable{background:transparent;border:1px solid transparent;border-radius:5px;color:var(--text);padding:3px 6px;font-size:12px;font-family:inherit;width:90px;text-align:right;transition:all .2s;outline:none;}
+.editable:hover{border-color:var(--border-h);background:var(--surface2);}
+.editable:focus{border-color:var(--green);background:var(--surface2);box-shadow:0 0 0 2px rgba(16,185,129,.12);}
+.final-salary{font-weight:800;font-size:13px;color:#34d399;transition:color .3s;}
+.final-salary.updated{color:#fbbf24;}
+
+/* WARNINGS */
+.warn-badge{display:inline-flex;align-items:center;gap:3px;font-size:9px;padding:2px 7px;border-radius:10px;margin:1px;white-space:nowrap;font-weight:600;}
+.warn-ot{background:rgba(245,158,11,.12);color:#fbbf24;border:1px solid rgba(245,158,11,.25);}
+.warn-ded{background:rgba(244,63,94,.12);color:#f87171;border:1px solid rgba(244,63,94,.25);}
+.warn-neg{background:rgba(244,63,94,.2);color:#f87171;border:1px solid rgba(244,63,94,.4);}
+.warn-low{background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.3);}
+.ok-badge{font-size:9px;color:#34d399;padding:2px 6px;}
+
+/* INSIGHTS */
+.insight-grid{display:flex;flex-direction:column;gap:8px;}
+.insight-item{display:flex;gap:10px;align-items:flex-start;padding:10px 14px;background:rgba(0,0,0,.2);border:1px solid var(--border);border-radius:var(--rs);font-size:12px;line-height:1.7;direction:rtl;}
+.insight-item.risk{background:rgba(244,63,94,.05);border-color:rgba(244,63,94,.2);}
+.insight-item.rec{background:rgba(16,185,129,.05);border-color:rgba(16,185,129,.2);}
+
+/* CHATBOT */
+.chat-wrap{display:flex;flex-direction:column;height:360px;}
+.chat-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:rgba(0,0,0,.15);}
+.chat-msgs::-webkit-scrollbar{width:4px;}
+.chat-msgs::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+.cb-wrap{display:flex;max-width:85%;}
+.cb-wrap.user{align-self:flex-end;}
+.cb-wrap.bot{align-self:flex-start;}
+.cb{padding:9px 14px;border-radius:14px;font-size:12px;line-height:1.7;word-break:break-word;}
+.cb-wrap.user .cb{background:linear-gradient(135deg,#10b981,#34d399);color:#fff;border-bottom-right-radius:3px;}
+.cb-wrap.bot .cb{background:var(--surface2);color:var(--text);border:1px solid var(--border);border-bottom-left-radius:3px;}
+.cb-typing span{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--green);animation:td 1.2s infinite;}
+.cb-typing span:nth-child(2){animation-delay:.2s;}
+.cb-typing span:nth-child(3){animation-delay:.4s;}
+@keyframes td{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+.chat-input-row{display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--border);background:var(--surface);}
+.chat-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);padding:8px 12px;font-size:12px;font-family:inherit;outline:none;direction:rtl;transition:border-color .2s;}
+.chat-input:focus{border-color:var(--green);}
+.chat-send{background:linear-gradient(135deg,#10b981,#34d399);border:none;color:#fff;padding:8px 16px;border-radius:var(--rs);cursor:pointer;font-size:12px;font-weight:700;font-family:inherit;transition:all .2s;}
+.chat-send:hover{transform:translateY(-1px);}
+
+/* COL MAP */
+.colmap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px;margin-top:10px;}
+.colmap-item{display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);font-size:10px;}
+.colmap-key{color:var(--muted);font-weight:600;}
+.colmap-val{color:#34d399;font-weight:700;}
+.colmap-miss{color:var(--rose);}
+
+/* ALERT */
+.alert{padding:11px 15px;border-radius:var(--rs);font-size:12px;direction:rtl;display:flex;gap:8px;align-items:flex-start;margin-bottom:4px;}
+.alert-err{background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.25);color:#fca5a5;}
+.alert-info{background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.25);color:#a5b4fc;}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-logo">
+    <div class="nav-logo-icon">💰</div>
+    <div>
+      <div class="nav-logo-text">Payroll Engine</div>
+      <div class="nav-logo-sub">HR Intelligence System</div>
+    </div>
+  </div>
+  <div class="nav-links">
+    <a href="/" class="nav-link">📊 Data Analyzer</a>
+    <a href="/payroll" class="nav-link active">💰 Payroll</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <!-- LANDING -->
+  <div class="landing-grid">
+    <a class="landing-card analyzer" href="/">
+      <div class="landing-icon">📊</div>
+      <div class="landing-title">Smart Data Analyzer</div>
+      <div class="landing-desc">تحليل ذكي لبيانات HR مع رؤى تلقائية وتوصيات</div>
+      <div class="landing-feats">
+        <div class="landing-feat"><div class="feat-dot"></div>Data Quality & KPI Dashboard</div>
+        <div class="landing-feat"><div class="feat-dot"></div>Auto Insights & Recommendations</div>
+        <div class="landing-feat"><div class="feat-dot"></div>HR Executive Report + Chatbot</div>
+      </div>
+      <div class="landing-cta">انتقل →</div>
+    </a>
+    <a class="landing-card payroll-c here" href="/payroll">
+      <div class="landing-icon">💰</div>
+      <div class="landing-title">Payroll Engine</div>
+      <div class="landing-desc">نظام ذكي لحساب الرواتب واكتشاف المشاكل التشغيلية</div>
+      <div class="landing-feats">
+        <div class="landing-feat"><div class="feat-dot"></div>حساب تلقائي — أوفرتايم عادي وعطل رسمية</div>
+        <div class="landing-feat"><div class="feat-dot"></div>جدول تفاعلي قابل للتعديل Live</div>
+        <div class="landing-feat"><div class="feat-dot"></div>تحذيرات ذكية + Chatbot + تصدير CSV</div>
+      </div>
+      <div class="landing-cta" style="background:linear-gradient(135deg,#10b981,#34d399);color:#fff">أنت هنا ✓</div>
+    </a>
+  </div>
+
+  {% if error %}
+  <div class="alert alert-err">⚠️ {{ error }}</div>
+  {% endif %}
+
+  <!-- UPLOAD -->
+  <div class="card">
+    <div class="lbl">01 — رفع ملف الرواتب</div>
+    <form action="/payroll/upload" method="post" enctype="multipart/form-data" id="upForm">
+      <div class="upload-zone" id="dz" onclick="document.getElementById('fileInp').click()">
+        <div style="font-size:38px;margin-bottom:10px;">📂</div>
+        <div style="font-size:14px;font-weight:700;">اسحب الملف هنا أو اضغط للاختيار</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px;">CSV أو Excel (.xlsx / .xls) — حد أقصى 10MB</div>
+        <input type="file" id="fileInp" name="file" accept=".csv,.xlsx,.xls" style="display:none" onchange="this.form.submit()">
+      </div>
+    </form>
+
+    {% if col_map %}
+    <div style="margin-top:14px;">
+      <div class="lbl" style="margin-bottom:6px;">🔍 الأعمدة المكتشفة تلقائياً</div>
+      <div class="colmap-grid">
+        {% set fields = [('id','الرقم الوظيفي'),('name','اسم الموظف'),('base_salary','الراتب الأساسي'),
+                         ('regular_ot','أوفرتايم عادي'),('holiday_ot','أوفرتايم عطل'),
+                         ('social_sec','ضمان اجتماعي'),('bonus','بونص'),('other_ded','خصومات أخرى')] %}
+        {% for key, label in fields %}
+        <div class="colmap-item">
+          <span class="colmap-key">{{ label }}:</span>
+          {% if key in col_map %}<span class="colmap-val">✓ {{ col_map[key] }}</span>
+          {% else %}<span class="colmap-miss">✗ غير موجود</span>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- RULES -->
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+      <div class="lbl" style="margin:0">02 — قواعد الحساب</div>
+      {% if results %}
+      <form action="/payroll/clear" method="post" style="display:inline">
+        <button type="submit" class="btn btn-red">🗑 مسح الملف</button>
+      </form>
+      {% endif %}
+    </div>
+    <div class="rules-grid">
+      <div class="rule-item">
+        <label class="rule-label">معدل أوفرتايم عادي (×)</label>
+        <input class="rule-input" id="r_reg_ot" type="number" step="0.1" min="1" max="5" value="{{ rules.regular_ot_rate if rules else 1.5 }}">
+      </div>
+      <div class="rule-item">
+        <label class="rule-label">معدل أوفرتايم عطل (×)</label>
+        <input class="rule-input" id="r_hol_ot" type="number" step="0.1" min="1" max="5" value="{{ rules.holiday_ot_rate if rules else 2.0 }}">
+      </div>
+      <div class="rule-item">
+        <label class="rule-label">حد الأوفرتايم (ساعة/شهر)</label>
+        <input class="rule-input" id="r_max_ot" type="number" step="1" min="0" max="200" value="{{ rules.max_ot_hours if rules else 60 }}">
+      </div>
+      <div class="rule-item">
+        <label class="rule-label">أيام العمل في الشهر</label>
+        <input class="rule-input" id="r_work_days" type="number" step="1" min="1" max="31" value="22">
+      </div>
+      <div class="rule-item">
+        <label class="rule-label">ساعات العمل في اليوم</label>
+        <input class="rule-input" id="r_work_hours" type="number" step="1" min="1" max="12" value="8">
+      </div>
+      <div class="rule-item">
+        <label class="rule-label">بونص ثابت للجميع</label>
+        <input class="rule-input" id="r_bonus" type="number" step="1" min="0" value="{{ rules.bonus_flat if rules else 0 }}">
+      </div>
+    </div>
+    {% if not results %}
+    <div class="alert alert-info" style="margin-top:12px;">ℹ️ ارفع ملف الرواتب أولاً لتفعيل الحساب</div>
+    {% endif %}
+  </div>
+
+  {% if results %}
+
+  <!-- KPI SUMMARY -->
+  <div class="card fade" id="summaryCard">
+    <div class="lbl">📊 ملخص الرواتب</div>
+    <div class="kpi-row">
+      <div class="kpi-c g">
+        <div class="kpi-c-label">إجمالي الرواتب</div>
+        <div class="kpi-c-val" id="s_total">{{ "{:,.3f}".format(summary.total_payroll) }}</div>
+        <div class="kpi-c-sub">{{ summary.total_employees }} موظف</div>
+      </div>
+      <div class="kpi-c b">
+        <div class="kpi-c-label">إجمالي الأوفرتايم</div>
+        <div class="kpi-c-val" id="s_ot">{{ "{:,.3f}".format(summary.total_ot_cost) }}</div>
+      </div>
+      <div class="kpi-c a">
+        <div class="kpi-c-label">إجمالي الخصومات</div>
+        <div class="kpi-c-val" id="s_ded">{{ "{:,.3f}".format(summary.total_deductions) }}</div>
+      </div>
+      <div class="kpi-c g">
+        <div class="kpi-c-label">أعلى راتب</div>
+        <div class="kpi-c-val" id="s_max">{{ "{:,.3f}".format(summary.max_salary) }}</div>
+      </div>
+      <div class="kpi-c r">
+        <div class="kpi-c-label">أقل راتب</div>
+        <div class="kpi-c-val" id="s_min">{{ "{:,.3f}".format(summary.min_salary) }}</div>
+      </div>
+      <div class="kpi-c {% if summary.flagged > 0 %}r{% else %}g{% endif %}">
+        <div class="kpi-c-label">تحذيرات</div>
+        <div class="kpi-c-val" id="s_flag">{{ summary.flagged }}</div>
+        <div class="kpi-c-sub">من {{ summary.total_employees }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EMPLOYEE TABLE -->
+  <div class="card fade" id="tableCard">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+      <div class="lbl" style="margin:0">👥 جدول الرواتب — قابل للتعديل</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-green" onclick="recalculateAll()">⚡ إعادة الحساب</button>
+        <button class="btn btn-export" onclick="exportCSV()">📥 تصدير CSV</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table id="payrollTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>الاسم</th>
+            <th>الراتب الأساسي</th>
+            <th>OT عادي (ساعة)</th>
+            <th>أجر OT عادي</th>
+            <th>OT عطل (ساعة)</th>
+            <th>أجر OT عطل</th>
+            <th>بونص</th>
+            <th>ضمان اجتماعي</th>
+            <th>خصومات أخرى</th>
+            <th>الراتب النهائي</th>
+            <th>تنبيهات</th>
+          </tr>
+        </thead>
+        <tbody id="payrollBody">
+          {% for r in results %}
+          <tr data-idx="{{ r.idx }}">
+            <td style="color:var(--muted);font-size:10px">{{ r.id }}</td>
+            <td style="font-weight:600;min-width:120px">{{ r.name }}</td>
+            <td><input class="editable" type="number" step="0.001" data-field="base_salary" value="{{ r.base_salary }}" onchange="onEdit(this)"></td>
+            <td><input class="editable" type="number" step="0.5"   data-field="regular_ot_hours" value="{{ r.regular_ot_hours }}" onchange="onEdit(this)"></td>
+            <td style="color:var(--muted);font-size:11px" id="rop_{{ r.idx }}">{{ "{:,.3f}".format(r.regular_ot_pay) }}</td>
+            <td><input class="editable" type="number" step="0.5"   data-field="holiday_ot_hours" value="{{ r.holiday_ot_hours }}" onchange="onEdit(this)"></td>
+            <td style="color:var(--muted);font-size:11px" id="hop_{{ r.idx }}">{{ "{:,.3f}".format(r.holiday_ot_pay) }}</td>
+            <td><input class="editable" type="number" step="0.001" data-field="bonus" value="{{ r.bonus }}" onchange="onEdit(this)"></td>
+            <td><input class="editable" type="number" step="0.001" data-field="social_security" value="{{ r.social_security }}" onchange="onEdit(this)"></td>
+            <td><input class="editable" type="number" step="0.001" data-field="other_deductions" value="{{ r.other_deductions }}" onchange="onEdit(this)"></td>
+            <td><span class="final-salary" id="fs_{{ r.idx }}">{{ "{:,.3f}".format(r.final_salary) }}</span></td>
+            <td id="warn_{{ r.idx }}">
+              {% if r.warnings %}
+                {% for w in r.warnings %}
+                  {% if 'OT_HIGH' in w %}<span class="warn-badge warn-ot">⚠️ OT عالٍ</span>
+                  {% elif w == 'DED_HIGH' %}<span class="warn-badge warn-ded">🔴 خصم مرتفع</span>
+                  {% elif w == 'NEG_SALARY' %}<span class="warn-badge warn-neg">🔴 راتب سالب</span>
+                  {% elif w == 'LOW_SALARY' %}<span class="warn-badge warn-low">🟡 راتب منخفض</span>
+                  {% endif %}
+                {% endfor %}
+              {% else %}<span class="ok-badge">✅</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if insights %}
+
+  <!-- INSIGHTS -->
+  {% if insights.insights %}
+  <div class="card fade" id="insightsCard">
+    <div class="lbl">💡 التحليلات والملاحظات</div>
+    <div class="insight-grid">
+      {% for item in insights.insights %}
+      <div class="insight-item"><span>◆</span><span>{{ item }}</span></div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- RISKS -->
+  {% if insights.top_risks %}
+  <div class="card fade" id="risksCard" style="border-color:rgba(244,63,94,.2)">
+    <div class="lbl">🚨 أهم المخاطر</div>
+    <div class="insight-grid">
+      {% for r in insights.top_risks %}
+      <div class="insight-item risk"><span>⚠️</span><span>{{ r }}</span></div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- RECOMMENDATIONS -->
+  {% if insights.recommendations %}
+  <div class="card fade" id="recsCard" style="border-color:rgba(16,185,129,.2)">
+    <div class="lbl">✅ التوصيات</div>
+    <div class="insight-grid">
+      {% for r in insights.recommendations %}
+      <div class="insight-item rec"><span>→</span><span>{{ r }}</span></div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% endif %}
+
+  <!-- CHATBOT -->
+  <div class="card fade" id="chatCard" style="border-color:rgba(16,185,129,.2);padding:0;overflow:hidden;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);background:rgba(16,185,129,.04);">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:16px">🤖</span>
+        <div class="lbl" style="margin:0">Payroll AI Assistant — اسأل عن الرواتب</div>
+      </div>
+      <button class="btn btn-ghost" style="font-size:10px;padding:4px 10px;" onclick="clearPayrollChat()">مسح ↺</button>
+    </div>
+    <div class="chat-wrap">
+      <div class="chat-msgs" id="chatMsgs">
+        <div class="cb-wrap bot">
+          <div class="cb" dir="rtl">مرحباً! 👋 البيانات جاهزة — اسألني عن أي موظف أو راتب أو مخاطرة.</div>
+        </div>
+      </div>
+      <div class="chat-input-row">
+        <button class="chat-send" onclick="sendPayrollChat()">إرسال ↑</button>
+        <input type="text" id="chatInput" class="chat-input" placeholder="مثال: من أعلى موظف في الأوفرتايم؟" onkeydown="if(event.key==='Enter') sendPayrollChat()">
+      </div>
+    </div>
+  </div>
+
+  {% endif %}
+
+</div>
+
+<script>
+// ── State ──
+const edits = {};
+let debounceTimer = null;
+
+// ── Fade in ──
+['summaryCard','tableCard','insightsCard','risksCard','recsCard','chatCard'].forEach((id,i)=>{
+  const el=document.getElementById(id);
+  if(el) setTimeout(()=>el.classList.add('in'),150+i*100);
+});
+
+// ── Upload drag ──
+const dz=document.getElementById('dz');
+if(dz){
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+  dz.addEventListener('drop',e=>{
+    e.preventDefault();dz.classList.remove('drag');
+    const f=e.dataTransfer.files[0];
+    if(f){const inp=document.getElementById('fileInp');const dt=new DataTransfer();dt.items.add(f);inp.files=dt.files;inp.form.submit();}
+  });
+}
+
+// ── Get current rules from inputs ──
+function getRules(){
+  return {
+    regular_ot_rate: parseFloat(document.getElementById('r_reg_ot')?.value||1.5),
+    holiday_ot_rate: parseFloat(document.getElementById('r_hol_ot')?.value||2.0),
+    max_ot_hours:    parseFloat(document.getElementById('r_max_ot')?.value||60),
+    bonus_flat:      parseFloat(document.getElementById('r_bonus')?.value||0),
+    working_days:    parseFloat(document.getElementById('r_work_days')?.value||22),
+    working_hours:   parseFloat(document.getElementById('r_work_hours')?.value||8),
+  };
+}
+
+// ── Live edit handler ──
+function onEdit(inp){
+  const row=inp.closest('tr');
+  const idx=parseInt(row.dataset.idx);
+  const field=inp.dataset.field;
+  const val=parseFloat(inp.value)||0;
+  if(!edits[idx]) edits[idx]={};
+  edits[idx][field]=val;
+  clearTimeout(debounceTimer);
+  debounceTimer=setTimeout(()=>recalculateRow(idx,row),300);
+}
+
+// ── Recalculate single row locally (instant) ──
+function recalculateRow(idx, row){
+  const rules=getRules();
+  const wd=rules.working_days, wh=rules.working_hours;
+
+  // Read all editable values from the row
+  const base  = parseFloat(row.querySelector('[data-field="base_salary"]')?.value)||0;
+  const regH  = parseFloat(row.querySelector('[data-field="regular_ot_hours"]')?.value)||0;
+  const holH  = parseFloat(row.querySelector('[data-field="holiday_ot_hours"]')?.value)||0;
+  const bonus = parseFloat(row.querySelector('[data-field="bonus"]')?.value)||0;
+  const ss    = parseFloat(row.querySelector('[data-field="social_security"]')?.value)||0;
+  const ded   = parseFloat(row.querySelector('[data-field="other_deductions"]')?.value)||0;
+
+  const hourly = base / wd / wh;
+  const regPay = hourly * rules.regular_ot_rate * regH;
+  const holPay = hourly * rules.holiday_ot_rate * holH;
+  const finalSal = base + regPay + holPay + bonus - ss - ded;
+
+  // Update computed cells
+  const rop=document.getElementById('rop_'+idx);
+  const hop=document.getElementById('hop_'+idx);
+  const fs =document.getElementById('fs_'+idx);
+  if(rop) rop.textContent=fmt(regPay);
+  if(hop) hop.textContent=fmt(holPay);
+  if(fs){
+    fs.textContent=fmt(finalSal);
+    fs.classList.add('updated');
+    setTimeout(()=>fs.classList.remove('updated'),1200);
+    fs.style.color=finalSal<0?'#f87171':finalSal<base*0.4?'#fbbf24':'#34d399';
+  }
+
+  // Warnings
+  const warnCell=document.getElementById('warn_'+idx);
+  if(warnCell){
+    const warns=[];
+    if(regH+holH>rules.max_ot_hours) warns.push('<span class="warn-badge warn-ot">⚠️ OT عالٍ</span>');
+    if(ss+ded>base*0.5) warns.push('<span class="warn-badge warn-ded">🔴 خصم مرتفع</span>');
+    if(finalSal<0) warns.push('<span class="warn-badge warn-neg">🔴 راتب سالب</span>');
+    else if(finalSal<base*0.4) warns.push('<span class="warn-badge warn-low">🟡 راتب منخفض</span>');
+    warnCell.innerHTML=warns.length?warns.join(''):'<span class="ok-badge">✅</span>';
+  }
+
+  updateSummary();
+}
+
+// ── Recalculate all rows ──
+function recalculateAll(){
+  document.querySelectorAll('#payrollBody tr').forEach(row=>{
+    const idx=parseInt(row.dataset.idx);
+    recalculateRow(idx,row);
+  });
+}
+
+// ── Update summary cards ──
+function updateSummary(){
+  let total=0,maxS=-Infinity,minS=Infinity,otTotal=0,dedTotal=0,flagged=0;
+  document.querySelectorAll('#payrollBody tr').forEach(row=>{
+    const idx=parseInt(row.dataset.idx);
+    const fs=document.getElementById('fs_'+idx);
+    if(!fs)return;
+    const val=parseFloat(fs.textContent.replace(/,/g,''))||0;
+    const rop=parseFloat(document.getElementById('rop_'+idx)?.textContent.replace(/,/g,'')||0);
+    const hop=parseFloat(document.getElementById('hop_'+idx)?.textContent.replace(/,/g,'')||0);
+    const ss=parseFloat(row.querySelector('[data-field="social_security"]')?.value||0);
+    const ded=parseFloat(row.querySelector('[data-field="other_deductions"]')?.value||0);
+    total+=val;otTotal+=rop+hop;dedTotal+=ss+ded;
+    if(val>maxS)maxS=val;if(val<minS)minS=val;
+    const warns=document.getElementById('warn_'+idx);
+    if(warns&&!warns.querySelector('.ok-badge'))flagged++;
+  });
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=fmt(v);};
+  set('s_total',total);set('s_ot',otTotal);set('s_ded',dedTotal);
+  set('s_max',maxS==='-Infinity'?0:maxS);set('s_min',minS==='Infinity'?0:minS);
+  const sf=document.getElementById('s_flag');if(sf)sf.textContent=flagged;
+}
+
+function fmt(n){return Number(n).toLocaleString('en',{minimumFractionDigits:3,maximumFractionDigits:3});}
+
+// ── Export CSV ──
+function exportCSV(){
+  const table=document.getElementById('payrollTable');if(!table)return;
+  const rows=[];
+  for(let row of table.rows){
+    const cols=[];
+    for(let cell of row.cells){
+      const inp=cell.querySelector('input');
+      let t=inp?inp.value:cell.innerText.replace(/\n/g,' ').trim();
+      cols.push('"'+t.replace(/"/g,'""')+'"');
+    }
+    rows.push(cols.join(','));
+  }
+  const blob=new Blob(['\uFEFF'+rows.join('\n')],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='payroll_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+}
+
+// ── Chatbot ──
+async function sendPayrollChat(){
+  const inp=document.getElementById('chatInput');
+  const msg=inp.value.trim();if(!msg)return;inp.value='';
+  addMsg(msg,'user');const typing=addTyping();
+  try{
+    const res=await fetch('/payroll/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:msg})});
+    const data=await res.json();typing.remove();addMsg(data.reply,'bot');
+  }catch(e){typing.remove();addMsg('حدث خطأ في الاتصال.','bot');}
+}
+function addMsg(text,who){
+  const box=document.getElementById('chatMsgs');
+  const wrap=document.createElement('div');wrap.className='cb-wrap '+who;
+  const b=document.createElement('div');b.className='cb';b.dir='rtl';b.innerText=text;
+  wrap.appendChild(b);box.appendChild(wrap);box.scrollTop=box.scrollHeight;return wrap;
+}
+function addTyping(){
+  const box=document.getElementById('chatMsgs');
+  const wrap=document.createElement('div');wrap.className='cb-wrap bot';
+  const b=document.createElement('div');b.className='cb cb-typing';
+  b.innerHTML='<span></span><span></span><span></span>';
+  wrap.appendChild(b);box.appendChild(wrap);box.scrollTop=box.scrollHeight;return wrap;
+}
+async function clearPayrollChat(){
+  await fetch('/payroll/chat/clear',{method:'POST'});
+  const box=document.getElementById('chatMsgs');box.innerHTML='';
+  addMsg('تمت إعادة المحادثة 🔄','bot');
+}
+document.getElementById('chatInput')?.addEventListener('keydown',e=>{if(e.key==='Enter')sendPayrollChat();});
+</script>
+</body>
+</html>
